@@ -76,3 +76,45 @@ class Scenario(Scene):
             for start, end in zip_pairs(next_vertices):
                 self.play(ShowCreation(Line(start=start, end=end, color=COLOR)), run_time=0.4 / (i + 1))
 
+
+class AnimTest(Scene):
+
+    def construct(self):
+        size = 6
+        d = size / 2
+        v_line = Line(start=np.array((-d, -d, 0)), end=np.array((-d, d, 0)), color=COLOR)
+        h_line = Line(start=np.array((-d, -d, 0)), end=np.array((d, -d, 0)), color=COLOR)
+        self.add(*[v_line, h_line])
+
+        frames_count = 100
+        dx = size / frames_count
+
+        start = np.array((-d, d, 0))
+        end = np.array((-d, -d, 0))
+
+        dot_start = Dot(color=COLOR).move_to(start)
+        dot_end = Dot(color=COLOR).move_to(end)
+        line = Line(start=start, end=end, color=COLOR)
+        self.add(*[dot_start, dot_end, line])
+
+        for i in range(frames_count):
+            new_start = start + np.array((0, -dx, 0))
+            new_end = end + np.array((dx, 0, 0))
+
+            self.play(
+                dot_start.move_to, new_start,
+                dot_end.move_to, new_end,
+                line.put_start_and_end_on, new_start, new_end,
+                run_time=5 / frames_count, rate_func=linear
+            )
+
+            if i % 10 == 0 and i > 0:
+                self.add(*[
+                    Dot(color=GREY_C).move_to(start),
+                    Dot(color=GREY_C).move_to(end),
+                    Line(start=start, end=end, color=GREY_C)])
+
+            start, end = new_start, new_end
+
+
+
