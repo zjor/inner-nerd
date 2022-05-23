@@ -14,7 +14,7 @@ from manimlib import *
 COLOR = GREEN_E
 
 
-def zip_pairs(items):
+def zip_to_pairs(items):
     return list(zip(items, items[1:] + [items[0]]))
 
 
@@ -40,81 +40,68 @@ def build_square_group(size, p):
     return g, [c1, c2, c3, c4]
 
 
-def inscribe_square(vertices, p):
+def inscribe(vertices, p):
     result = []
-    for start, end in zip_pairs(vertices):
+    for start, end in zip_to_pairs(vertices):
         result.append(start * (1 - p) + end * p)
     return result
+
+
+def get_vertices(items, p, depth):
+    vertices = [items]
+    for i in range(depth):
+        vertices.append(inscribe(vertices[-1], p))
+    return vertices
+
+
+class InscribedPolygons:
+
+    @staticmethod
+    def connect_polygon(vertices):
+        g = VGroup()
+        for start, end in zip_to_pairs(vertices):
+            g += Line(start, end)
+        return g
+
+    @staticmethod
+    def update_polygon(group, vertices):
+        for (start, end), line in zip(zip_to_pairs(vertices), group):
+            line.put_start_and_end_on(start, end)
+
+    def __init__(self, bounds, depth=5, p=0.15):
+        self.bounds = bounds
+        self.depth = depth
+        self.vertices = [bounds]
+        self.groups = VGroup()
+        self.groups.add(InscribedPolygons.connect_polygon(bounds))
+
+        for _ in range(depth):
+            self.vertices.append(inscribe(self.vertices[-1], p))
+            self.groups.add(InscribedPolygons.connect_polygon(self.vertices[-1]))
+
+    def update_bounds(self):
+        self.bounds = [line.get_start() for line in self.groups[0]]
+        self.vertices[0] = self.bounds
+
+    def set_p(self, p):
+        self.vertices = self.vertices[:1]
+        for i in range(self.depth):
+            self.vertices.append(inscribe(self.vertices[-1], p))
+            InscribedPolygons.update_polygon(self.groups[i + 1], self.vertices[-1])
 
 
 class Scenario(Scene):
 
     def construct(self):
-        dot = Circle(radius=0.05, fill_opacity=1, color=COLOR)
-        dot.set_fill(COLOR)
-        self.play(FadeIn(dot))
-
-        p = 0.15
-
-        line_and_dot_group, _ = build_line_with_a_dot(np.array((-2, 0, 0)), np.array((2, 0, 0)), p)
-        self.play(Transform(dot, target_mobject=line_and_dot_group))
-        self.play(FadeOut(dot))
-
-        square_group, next_vertices = build_square_group(4, p)
-        self.play(FadeIn(square_group))
-
-        for start, end in zip_pairs(next_vertices):
-            self.play(ShowCreation(Line(start=start, end=end, color=COLOR)), run_time=0.4)
-
-        for i in range(15):
-            next_vertices = inscribe_square(next_vertices, p)
-            g = VGroup()
-            for v in next_vertices:
-                g += Circle(arc_center=v, radius=0.05, fill_opacity=1, color=COLOR)
-            self.play(FadeIn(g), run_time=0.4 / (i + 1))
-
-            for start, end in zip_pairs(next_vertices):
-                self.play(ShowCreation(Line(start=start, end=end, color=COLOR)), run_time=0.4 / (i + 1))
-
-
-class AnimTest(Scene):
-
-    def construct(self):
-        size = 6
+        size = 4
         d = size / 2
-        v_line = Line(start=np.array((-d, -d, 0)), end=np.array((-d, d, 0)), color=COLOR)
-        h_line = Line(start=np.array((-d, -d, 0)), end=np.array((d, -d, 0)), color=COLOR)
-        self.add(*[v_line, h_line])
+        bound_vertices = [np.array((-d, -d, 0)), np.array((-d, d, 0)), np.array((d, d, 0)), np.array((d, -d, 0))]
 
-        frames_count = 100
-        dx = size / frames_count
+        p = InscribedPolygons(bound_vertices, 5, 0)
+        self.play(p.groups.move_to, LEFT * 3, run_time=2)
+        p.update_bounds()
 
-        start = np.array((-d, d, 0))
-        end = np.array((-d, -d, 0))
+        def update_func(_obj, alpha):
+            p.set_p(alpha)
 
-        dot_start = Dot(color=COLOR).move_to(start)
-        dot_end = Dot(color=COLOR).move_to(end)
-        line = Line(start=start, end=end, color=COLOR)
-        self.add(*[dot_start, dot_end, line])
-
-        for i in range(frames_count):
-            new_start = start + np.array((0, -dx, 0))
-            new_end = end + np.array((dx, 0, 0))
-
-            self.play(
-                dot_start.move_to, new_start,
-                dot_end.move_to, new_end,
-                line.put_start_and_end_on, new_start, new_end,
-                run_time=5 / frames_count, rate_func=linear
-            )
-
-            if i % 10 == 0 and i > 0:
-                self.add(*[
-                    Dot(color=GREY_C).move_to(start),
-                    Dot(color=GREY_C).move_to(end),
-                    Line(start=start, end=end, color=GREY_C)])
-
-            start, end = new_start, new_end
-
-
-
+        self.play(UpdateFromAlphaFunc(p.groups, update_func), run_time=3)
