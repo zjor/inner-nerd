@@ -91,17 +91,54 @@ class InscribedPolygons:
 
 
 class Scenario(Scene):
+    SQUARE_SIDE = 4.0
+    DEPTH = 9
+
+    def play_intro(self) -> Mobject:
+        dot = Dot(color=COLOR)
+        square = Square(side_length=Scenario.SQUARE_SIDE, color=COLOR)
+        self.play(FadeIn(dot))
+        self.wait(0.5)
+        self.play(ReplacementTransform(dot, target_mobject=square), run_time=2)
+        return square
+
+    def play_inscribe_squares(self):
+        d = Scenario.SQUARE_SIDE / 2
+        corners = [np.array((-1, -1, 0)) * d,
+                   np.array((-1, 1, 0)) * d,
+                   np.array((1, 1, 0)) * d,
+                   np.array((1, -1, 0)) * d]
+
+        p = 0.15
+        dots = VGroup(*[Dot(color=BLUE) for _ in range(4)])
+        lines = VGroup()
+        for _ in range(Scenario.DEPTH):
+            corners = inscribe(corners, p)
+            for dot, corner in zip(dots, corners):
+                dot.move_to(corner)
+
+            self.play(FadeIn(dots), run_time=0.5)
+
+            for start, end in zip_to_pairs(corners):
+                line = Line(start, end, color=COLOR)
+                self.play(ShowCreation(line), run_time=0.5)
+                lines += line
+
+            self.play(FadeOut(dots), run_time=0.5)
 
     def construct(self):
-        size = 4
-        d = size / 2
-        bound_vertices = [np.array((-d, -d, 0)), np.array((-d, d, 0)), np.array((d, d, 0)), np.array((d, -d, 0))]
+        box = self.play_intro()
+        self.play_inscribe_squares()
 
-        p = InscribedPolygons(bound_vertices, 5, 0)
-        self.play(p.groups.move_to, LEFT * 3, run_time=2)
-        p.update_bounds()
-
-        def update_func(_obj, alpha):
-            p.set_p(alpha)
-
-        self.play(UpdateFromAlphaFunc(p.groups, update_func), run_time=3)
+        # size = 4
+        # d = size / 2
+        # bound_vertices = [np.array((-d, -d, 0)), np.array((-d, d, 0)), np.array((d, d, 0)), np.array((d, -d, 0))]
+        #
+        # p = InscribedPolygons(bound_vertices, 5, 0)
+        # self.play(p.groups.move_to, LEFT * 3, run_time=2)
+        # p.update_bounds()
+        #
+        # def update_func(_obj, alpha):
+        #     p.set_p(alpha)
+        #
+        # self.play(UpdateFromAlphaFunc(p.groups, update_func), run_time=3)
