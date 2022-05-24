@@ -1,15 +1,6 @@
 import numpy as np
+from math import sqrt
 from manimlib import *
-
-"""
-1. A dot transforms into a line with a dot
-2. Group transforms into a square with four dots
-3. Four dots are connected with animation
-4. More dots appear on the sides of the inner square
-5. New dots are connected
-6. The process 4-5 is repeated X times
-7. The ratio 'p' of the dot location is animated
-"""
 
 COLOR = GREEN_E
 
@@ -52,6 +43,39 @@ def get_vertices(items, p, depth):
     for i in range(depth):
         vertices.append(inscribe(vertices[-1], p))
     return vertices
+
+
+def get_triangle_tips(side):
+    return [
+        np.array((-1, -1, 0)) * side / 2,
+        np.array((1, -1, 0)) * side / 2,
+        np.array((0, sqrt(3) / 2, 0)) * side / 2]
+
+
+def get_square_tips(side):
+    d = side / 2
+    return [np.array((-1, -1, 0)) * d,
+            np.array((-1, 1, 0)) * d,
+            np.array((1, 1, 0)) * d,
+            np.array((1, -1, 0)) * d]
+
+
+def move_tips(tips, offset):
+    for tip in tips:
+        tip += offset
+    return tips
+
+
+def build_triangle(side, color):
+    """
+    The default Triangle() method fails with "NameError: name 'DEGREES' is not defined"
+    :return: VGroup of lines forming a triangle and coordinates of the tips
+    """
+    tips = get_triangle_tips(side)
+    g = VGroup()
+    for start, end in zip_to_pairs(tips):
+        g += Line(start, end, color=color)
+    return g, tips
 
 
 class InscribedPolygons:
@@ -103,42 +127,42 @@ class Scenario(Scene):
         return square
 
     def play_inscribe_squares(self):
-        d = Scenario.SQUARE_SIDE / 2
-        corners = [np.array((-1, -1, 0)) * d,
-                   np.array((-1, 1, 0)) * d,
-                   np.array((1, 1, 0)) * d,
-                   np.array((1, -1, 0)) * d]
+        tips = get_square_tips(Scenario.SQUARE_SIDE)
 
         p = 0.15
         dots = VGroup(*[Dot(color=BLUE) for _ in range(4)])
         lines = VGroup()
-        for _ in range(Scenario.DEPTH):
-            corners = inscribe(corners, p)
-            for dot, corner in zip(dots, corners):
-                dot.move_to(corner)
+        for i in range(Scenario.DEPTH):
+            tips = inscribe(tips, p)
+            for dot, tip in zip(dots, tips):
+                dot.move_to(tip)
+            runtime_base = (Scenario.DEPTH - i) / Scenario.DEPTH
+            self.play(FadeIn(dots), run_time=0.3 * runtime_base)
 
-            self.play(FadeIn(dots), run_time=0.5)
-
-            for start, end in zip_to_pairs(corners):
+            for start, end in zip_to_pairs(tips):
                 line = Line(start, end, color=COLOR)
-                self.play(ShowCreation(line), run_time=0.5)
+                self.play(ShowCreation(line), run_time=0.4 * runtime_base)
                 lines += line
 
-            self.play(FadeOut(dots), run_time=0.5)
+            self.play(FadeOut(dots), run_time=0.2 * runtime_base)
+        self.wait(1)
+        self.play(FadeOut(lines))
 
     def construct(self):
         box = self.play_intro()
-        self.play_inscribe_squares()
+        # self.play_inscribe_squares()
 
-        # size = 4
-        # d = size / 2
-        # bound_vertices = [np.array((-d, -d, 0)), np.array((-d, d, 0)), np.array((d, d, 0)), np.array((d, -d, 0))]
-        #
-        # p = InscribedPolygons(bound_vertices, 5, 0)
-        # self.play(p.groups.move_to, LEFT * 3, run_time=2)
-        # p.update_bounds()
-        #
-        # def update_func(_obj, alpha):
-        #     p.set_p(alpha)
-        #
-        # self.play(UpdateFromAlphaFunc(p.groups, update_func), run_time=3)
+        self.play(box.move_to, LEFT * 2.5, run_time=0.5)
+
+        triangle, tri_tips = build_triangle(Scenario.SQUARE_SIDE, BLUE)
+        triangle.move_to(RIGHT * 2.5)
+        self.play(FadeIn(triangle), run_time=0.5)
+
+        box_tips = move_tips(get_square_tips(Scenario.SQUARE_SIDE), LEFT * 2.5)
+
+        p = InscribedPolygons(box_tips, 5, 0)
+        
+        def update_func(_obj, alpha):
+            p.set_p(alpha)
+        
+        self.play(UpdateFromAlphaFunc(p.groups, update_func), run_time=3)
