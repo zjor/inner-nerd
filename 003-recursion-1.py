@@ -78,6 +78,13 @@ def build_triangle(side, color):
     return g, tips
 
 
+def build_polygon(tips, color):
+    g = VGroup()
+    for start, end in zip_to_pairs(tips):
+        g += Line(start, end, color=color)
+    return g
+
+
 class InscribedPolygons:
 
     @staticmethod
@@ -150,29 +157,40 @@ class Scenario(Scene):
 
     def play_inscribed_polygons(self):
         box_tips = move_tips(get_square_tips(Scenario.SQUARE_SIDE), LEFT * 2.5)
+        inscribed_boxes = InscribedPolygons(box_tips, depth=Scenario.DEPTH, p=0, color=COLOR)
 
-        p = InscribedPolygons(box_tips, Scenario.DEPTH, 0)
+        tri_tips = move_tips(get_triangle_tips(Scenario.SQUARE_SIDE), RIGHT * 2.5)
+        inscribed_tri = InscribedPolygons(tri_tips, depth=Scenario.DEPTH, p=0, color=BLUE)
         
-        def get_update_func(obj, direction)
+        def get_update_func(obj, direction):
             def update_func(_obj, alpha):
                 p = alpha if direction > 0 else 1 - alpha
                 obj.set_p(p)
             return update_func
         
-        self.play(UpdateFromAlphaFunc(p.groups, get_update_func(p, 1)), run_time=3)
+        self.play(UpdateFromAlphaFunc(inscribed_boxes.groups, get_update_func(inscribed_boxes, 1)), run_time=3)
         self.wait(0.5)
-        self.play(UpdateFromAlphaFunc(p.groups, get_update_func(p, -1)), run_time=3)
+        self.play(UpdateFromAlphaFunc(inscribed_tri.groups, get_update_func(inscribed_tri, -1)), run_time=3)
+        self.wait(0.5)
+        self.play(UpdateFromAlphaFunc(inscribed_tri.groups, get_update_func(inscribed_tri, 1)), run_time=3)
+        self.wait(0.5)
+        self.play(UpdateFromAlphaFunc(inscribed_boxes.groups, get_update_func(inscribed_boxes, -1)), run_time=3)
 
+    def play_outro(self):
+        self.wait(1.5)
+        self.play(*[FadeOut(mob) for mob in self.mobjects])
 
     def construct(self):
         box = self.play_intro()
-        # self.play_inscribe_squares()
+        self.play_inscribe_squares()
 
         self.play(box.move_to, LEFT * 2.5, run_time=0.5)
 
-        triangle, tri_tips = build_triangle(Scenario.SQUARE_SIDE, BLUE)
-        triangle.move_to(RIGHT * 2.5)
+        tri_tips = move_tips(get_triangle_tips(Scenario.SQUARE_SIDE), RIGHT * 2.5)
+        tri = build_polygon(tri_tips, BLUE)
         
-        self.play(FadeIn(triangle), run_time=0.5)
+        self.play(FadeIn(tri), run_time=0.5)
         self.wait(0.5)
+        self.remove(box)
         self.play_inscribed_polygons()
+        self.play_outro()
