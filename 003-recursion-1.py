@@ -81,10 +81,10 @@ def build_triangle(side, color):
 class InscribedPolygons:
 
     @staticmethod
-    def connect_polygon(vertices):
+    def connect_polygon(vertices, color):
         g = VGroup()
         for start, end in zip_to_pairs(vertices):
-            g += Line(start, end)
+            g += Line(start, end, color=color)
         return g
 
     @staticmethod
@@ -92,16 +92,16 @@ class InscribedPolygons:
         for (start, end), line in zip(zip_to_pairs(vertices), group):
             line.put_start_and_end_on(start, end)
 
-    def __init__(self, bounds, depth=5, p=0.15):
+    def __init__(self, bounds, depth=5, p=0.15, color=COLOR):
         self.bounds = bounds
         self.depth = depth
         self.vertices = [bounds]
         self.groups = VGroup()
-        self.groups.add(InscribedPolygons.connect_polygon(bounds))
+        self.groups.add(InscribedPolygons.connect_polygon(bounds, color))
 
         for _ in range(depth):
             self.vertices.append(inscribe(self.vertices[-1], p))
-            self.groups.add(InscribedPolygons.connect_polygon(self.vertices[-1]))
+            self.groups.add(InscribedPolygons.connect_polygon(self.vertices[-1], color))
 
     def update_bounds(self):
         self.bounds = [line.get_start() for line in self.groups[0]]
@@ -148,6 +148,22 @@ class Scenario(Scene):
         self.wait(1)
         self.play(FadeOut(lines))
 
+    def play_inscribed_polygons(self):
+        box_tips = move_tips(get_square_tips(Scenario.SQUARE_SIDE), LEFT * 2.5)
+
+        p = InscribedPolygons(box_tips, Scenario.DEPTH, 0)
+        
+        def get_update_func(obj, direction)
+            def update_func(_obj, alpha):
+                p = alpha if direction > 0 else 1 - alpha
+                obj.set_p(p)
+            return update_func
+        
+        self.play(UpdateFromAlphaFunc(p.groups, get_update_func(p, 1)), run_time=3)
+        self.wait(0.5)
+        self.play(UpdateFromAlphaFunc(p.groups, get_update_func(p, -1)), run_time=3)
+
+
     def construct(self):
         box = self.play_intro()
         # self.play_inscribe_squares()
@@ -156,13 +172,7 @@ class Scenario(Scene):
 
         triangle, tri_tips = build_triangle(Scenario.SQUARE_SIDE, BLUE)
         triangle.move_to(RIGHT * 2.5)
+        
         self.play(FadeIn(triangle), run_time=0.5)
-
-        box_tips = move_tips(get_square_tips(Scenario.SQUARE_SIDE), LEFT * 2.5)
-
-        p = InscribedPolygons(box_tips, 5, 0)
-        
-        def update_func(_obj, alpha):
-            p.set_p(alpha)
-        
-        self.play(UpdateFromAlphaFunc(p.groups, update_func), run_time=3)
+        self.wait(0.5)
+        self.play_inscribed_polygons()
