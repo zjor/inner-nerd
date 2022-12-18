@@ -71,9 +71,15 @@ class JinJangVertices:
 class Scenario(Scene):
     font = 'Monospace'
 
-    def __init__(self, radius: float = 2.0):
+    def __init__(
+            self,
+            radius: float = 4.0,
+            primary_font_size: int = 108,
+            secondary_font_size: int = 96
+    ):
         super().__init__()
         self.radius = radius
+        self.secondary_font_size = secondary_font_size
         self.jj_vert = JinJangVertices(radius)
 
         self.line_conf = {
@@ -85,8 +91,11 @@ class Scenario(Scene):
         r_8 = self.radius / 8
         self.top_circle = Circle(radius=r_8, **self.line_conf).move_to(np.array((0.0, r_2, 0.0)))
         self.bottom_circle = Circle(radius=r_8, **self.line_conf).move_to(np.array((0.0, -r_2, 0.0)))
+        self.text = Text("陰陽", color=RED, font_size=primary_font_size).move_to(np.array((0.0, -radius * 1.3, 0.0)))
+
         self.to_fadeout = []
         self.to_remove = []
+        self.jj_group: VGroup = None
 
     def draw_jj_shape(self):
         self.to_remove = [
@@ -97,15 +106,15 @@ class Scenario(Scene):
             ParametricFunction(
                 self.jj_vert.get_s_func,
                 t_range=np.array([0, TAU]),
-                **self.line_conf),
-            self.top_circle,
-            self.bottom_circle
+                **self.line_conf)
         ]
         for shape in self.to_remove:
             self.play(Create(shape))
+        self.play(Create(self.top_circle), Create(self.bottom_circle))
+        self.to_remove.extend([self.top_circle, self.bottom_circle])
 
     def flip_jj_shape(self):
-        group = VGroup(*[
+        self.jj_group = VGroup(*[
             Polygon(
                 *self.jj_vert.get_full_circle(),
                 **self.line_conf
@@ -119,7 +128,7 @@ class Scenario(Scene):
         ])
         self.play(ApplyMatrix(
             matrix=[[1, 0], [0, -1]],
-            mobject=group
+            mobject=self.jj_group
         ), run_time=2.0)
 
     def fill_jj_halves(self):
@@ -142,9 +151,17 @@ class Scenario(Scene):
             "stroke_width": 0,
             "color": GREY_E
         }
+
+        r_2 = self.radius / 2
+        r_8 = self.radius / 8
+        _top_circle = Circle(radius=r_8, **conf_right).move_to(np.array((0.0, r_2, 0.0)))
+        _bottom_circle = Circle(radius=r_8, **conf_left).move_to(np.array((0.0, -r_2, 0.0)))
+
         self.to_fadeout = [
+            _top_circle,
+            _bottom_circle,
             Cutout(left_half_poly, self.top_circle, **conf_left),
-            Cutout(right_half_poly, self.bottom_circle, **conf_right)
+            Cutout(right_half_poly, self.bottom_circle, **conf_right),
         ]
         self.play(*map(lambda shape: FadeIn(shape), self.to_fadeout))
 
@@ -156,31 +173,33 @@ class Scenario(Scene):
         self.remove(*self.to_remove)
         self.to_remove.clear()
 
+    def write_final_message(self):
+        self.jj_group.generate_target()
+        self.jj_group.target.scale(0.5).shift(2 * UP)
+
+        for obj in self.jj_group.target:
+            obj.set(stroke_width=3)
+
+        self.play(MoveToTarget(self.jj_group))
+
+        line1 = Text("Sacral", color=YELLOW_B, font_size=self.secondary_font_size).next_to(self.jj_group.target, DOWN)
+        line2 = Text("geometry", color=YELLOW_B, font_size=self.secondary_font_size).next_to(line1, DOWN)
+
+        self.play(Write(line1))
+        self.play(Write(line2))
+
     def construct(self) -> None:
         self.wait(0.5)
         self.draw_jj_shape()
         self.fill_jj_halves()
+
+        self.play(Write(self.text))
+        self.to_fadeout.append(self.text)
+        self.wait(2.0)
+
         self._fade_out()
         self._remove()
         self.flip_jj_shape()
-
-        #
-        # circle = Circle(radius=1.0, stroke_color=BLUE_C)
-        # self.play(Create(circle), run_time=2.0)
-        #
-        # top_arc = Arc(start_angle=TAU / 4, angle=-TAU / 2, radius=0.5).set_stroke(BLUE_C)
-        # top_arc.move_to(np.array((0.25, 0.5, 0.0)))
-        # self.play(Create(top_arc))
-        #
-        # bottom_arc = Arc(start_angle=TAU / 4, angle=TAU / 2, radius=0.5).set_stroke(BLUE_C)
-        # bottom_arc.move_to(np.array((-0.25, -0.5, 0.0)))
-        # self.play(Create(bottom_arc))
-        #
-        # top_circle = Circle(radius=0.125, stroke_color=BLUE_C).move_to(np.array((0.0, 0.5, 0.0)))
-        # self.play(Create(top_circle))
-        #
-        # bottom_circle = Circle(radius=0.125, stroke_color=BLUE_C).move_to(np.array((0.0, -0.5, 0.0)))
-        # self.play(Create(bottom_circle))
-        #
-        # poly = self.left_half()
-        # self.play(FadeIn(poly))
+        self.write_final_message()
+        self.wait(3.0)
+        self.play(*[FadeOut(obj) for obj in self.mobjects])
