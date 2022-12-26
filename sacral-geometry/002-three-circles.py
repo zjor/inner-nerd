@@ -20,6 +20,20 @@ def get_vertices(radius, start_angle, center, n):
         ]) + np.array(center))
     return vertices
 
+PRIMARY_COLOR = "#FFCD03"
+SECONDARY_COLOR = "#CFA600"
+PRIMARY_THICKNESS = 2.0
+SECONDARY_THICKNESS = 0.5
+
+pcpt_conf = {
+    "stroke_color": PRIMARY_COLOR,
+    "stroke_width": PRIMARY_THICKNESS
+}
+
+scst_conf = {
+    "stroke_color": SECONDARY_COLOR,
+    "stroke_width": SECONDARY_THICKNESS
+}
 
 class Scenario(Scene):
     def construct(self):
@@ -37,26 +51,25 @@ class Scenario(Scene):
             ])
 
         for i in range(0, 3):
-            self.add(Circle(radius=scale, stroke_color=BLUE).move_to(root_centers[i]))
-            self.add(Circle(radius=0.01).move_to(root_centers[i]))
+            self.add(Circle(radius=scale, **pcpt_conf).move_to(root_centers[i]))
 
         # dashed hexagon
         hex_vertices = get_vertices(r, alpha, (0, 0, 0), 6)
         self.add(DashedVMobject(Polygon(*hex_vertices), num_dashes=36))
         for i in range(0, 3):
             self.add(DashedVMobject(
-                Line(start=[0, 0, 0], end=hex_vertices[i * 2 + 1], stroke_color=BLUE),
+                Line(start=[0, 0, 0], end=hex_vertices[i * 2 + 1], **scst_conf),
                 num_dashes=7))
 
         # inner hexagons
         for i in range(0, 3):
             inner_hex_vertices = get_vertices(scale, -PI / 3 + TAU / 3 * i, root_centers[i], 6)
-            self.add(Polygon(*inner_hex_vertices))
+            self.add(Polygon(*inner_hex_vertices, **scst_conf))
             self.add(Polygon(*[
                 hex_vertices[2 * i + 1],
                 inner_hex_vertices[0], inner_hex_vertices[1]
-            ]))
+            ], **scst_conf))
 
         outer_r = scale * (1 + 1 / np.sqrt(3))
-        self.add(Circle(radius=outer_r))
-        self.add(DashedVMobject(Circle(radius=(outer_r + 0.3)), num_dashes=96))
+        self.add(Circle(radius=outer_r, **pcpt_conf))
+        self.add(DashedVMobject(Circle(radius=(outer_r + 0.3), **scst_conf), num_dashes=96))
