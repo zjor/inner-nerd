@@ -1,5 +1,6 @@
 from manim import *
 import numpy as np
+from scene_utils import WithIntroScenario
 
 
 def distance(p1, p2):
@@ -20,6 +21,7 @@ def get_vertices(radius, start_angle, center, n) -> list:
         ]) + np.array(center))
     return vertices
 
+
 PRIMARY_COLOR = "#FFCD03"
 SECONDARY_COLOR = "#CFA600"
 PRIMARY_THICKNESS = 2.0
@@ -35,12 +37,18 @@ scst_conf = {
     "stroke_width": SECONDARY_THICKNESS
 }
 
-class Scenario(Scene):
+
+class Scenario(WithIntroScenario):
+    def __init__(self):
+        super().__init__()
+
     def construct(self):
+        self.into()
+
         self.wait(0.5)
 
         alpha = 3 * PI / 2
-        scale = 2.0
+        scale = 3.0
         r = 2 / np.sqrt(3) * scale
         root_vertices = get_vertices(r, alpha, (0, 0, 0), 3)
 
@@ -85,11 +93,6 @@ class Scenario(Scene):
         satellites.extend(map(lambda x: (x, 0.05), get_vertices(outer_r2, - PI / 12, (0, 0, 0), 4)))
         sat_anim = []
         for s in satellites:
-            sat_anim.append(FadeIn(Circle(radius=s[1], fill_color=PRIMARY_COLOR, fill_opacity=1, **pcpt_conf).move_to(s[0])))
+            sat_anim.append(
+                FadeIn(Circle(radius=s[1], fill_color=PRIMARY_COLOR, fill_opacity=1, **pcpt_conf).move_to(s[0])))
         self.play(*sat_anim)
-
-
-
-
-
-
