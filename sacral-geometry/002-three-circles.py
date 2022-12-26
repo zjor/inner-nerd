@@ -10,7 +10,7 @@ def distance(p1, p2):
     )
 
 
-def get_vertices(radius, start_angle, center, n):
+def get_vertices(radius, start_angle, center, n) -> list:
     vertices = []
     for i in range(0, n):
         vertices.append(np.array([
@@ -23,7 +23,7 @@ def get_vertices(radius, start_angle, center, n):
 PRIMARY_COLOR = "#FFCD03"
 SECONDARY_COLOR = "#CFA600"
 PRIMARY_THICKNESS = 2.0
-SECONDARY_THICKNESS = 0.5
+SECONDARY_THICKNESS = 1.0
 
 pcpt_conf = {
     "stroke_color": PRIMARY_COLOR,
@@ -37,6 +37,8 @@ scst_conf = {
 
 class Scenario(Scene):
     def construct(self):
+        self.wait(0.5)
+
         alpha = 3 * PI / 2
         scale = 2.0
         r = 2 / np.sqrt(3) * scale
@@ -51,25 +53,43 @@ class Scenario(Scene):
             ])
 
         for i in range(0, 3):
-            self.add(Circle(radius=scale, **pcpt_conf).move_to(root_centers[i]))
+            self.play(Create(Circle(radius=scale, **pcpt_conf).move_to(root_centers[i])), run_time=1)
 
         # dashed hexagon
         hex_vertices = get_vertices(r, alpha, (0, 0, 0), 6)
-        self.add(DashedVMobject(Polygon(*hex_vertices), num_dashes=36))
+        self.play(Create(DashedVMobject(Polygon(*hex_vertices, **scst_conf), num_dashes=36)), run_time=1)
+
+        lines_to_center = []
         for i in range(0, 3):
-            self.add(DashedVMobject(
+            lines_to_center.append(Create(DashedVMobject(
                 Line(start=[0, 0, 0], end=hex_vertices[i * 2 + 1], **scst_conf),
-                num_dashes=7))
+                num_dashes=7)))
+        self.play(*lines_to_center)
 
         # inner hexagons
         for i in range(0, 3):
             inner_hex_vertices = get_vertices(scale, -PI / 3 + TAU / 3 * i, root_centers[i], 6)
-            self.add(Polygon(*inner_hex_vertices, **scst_conf))
-            self.add(Polygon(*[
+            self.play(Create(Polygon(*inner_hex_vertices, **scst_conf)))
+            self.play(Create(Polygon(*[
                 hex_vertices[2 * i + 1],
                 inner_hex_vertices[0], inner_hex_vertices[1]
-            ], **scst_conf))
+            ], **scst_conf)))
 
         outer_r = scale * (1 + 1 / np.sqrt(3))
-        self.add(Circle(radius=outer_r, **pcpt_conf))
-        self.add(DashedVMobject(Circle(radius=(outer_r + 0.3), **scst_conf), num_dashes=96))
+        self.play(Create(Circle(radius=outer_r, **pcpt_conf)))
+        outer_r2 = outer_r + 0.3
+        self.play(Create(DashedVMobject(Circle(radius=outer_r2, **scst_conf), num_dashes=96)))
+
+        satellites: list = list(map(lambda x: (x, 0.1), get_vertices(outer_r2, 0, (0, 0, 0), 4)))
+        satellites.extend(map(lambda x: (x, 0.05), get_vertices(outer_r2, PI / 12, (0, 0, 0), 4)))
+        satellites.extend(map(lambda x: (x, 0.05), get_vertices(outer_r2, - PI / 12, (0, 0, 0), 4)))
+        sat_anim = []
+        for s in satellites:
+            sat_anim.append(FadeIn(Circle(radius=s[1], fill_color=PRIMARY_COLOR, fill_opacity=1, **pcpt_conf).move_to(s[0])))
+        self.play(*sat_anim)
+
+
+
+
+
+
