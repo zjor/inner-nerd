@@ -7,3 +7,5 @@ __pycache__/
 images/
 videos/
 media/
+
+sandbox.py
