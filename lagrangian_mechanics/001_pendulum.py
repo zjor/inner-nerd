@@ -53,7 +53,64 @@ ys = -L * np.cos(thetas)
 
 
 class Scenario(MovingCameraScene):
+
+    def play_intro(self):
+        _l = 2.0
+        _th = np.pi / 6
+        _th_ = _th + 0.3
+        _origin = (0, 1, 0)
+        _end = (-_l * np.sin(_th), 1.0 - _l * np.cos(_th), 0)
+
+        primary_params = {
+            "stroke_color": GREEN_B,
+            "fill_opacity": 1,
+            "fill_color": GREEN_B
+        }
+
+        secondary_params = {
+            "stroke_color": BLUE_A,
+            "stroke_width": 2.0
+        }
+
+        group = VGroup()
+        group.add(*[
+            Line(start=(-0.5, 1.0, 0), end=(0.5, 1.0, 0), **primary_params),
+            DashedVMobject(Line(start=(0, 1.2, 0), end=(0, -1.2, 0), **secondary_params), num_dashes=9),
+            Line(start=_origin, end=_end, **primary_params),
+            Arc(radius=0.5, start_angle=-PI / 2, angle=-_th, arc_center=_origin, **secondary_params),
+            DashedVMobject(
+                Arc(radius=_l, start_angle=-_th_ - PI / 2, angle=2 * _th_, arc_center=_origin, **secondary_params),
+                num_dashes=12
+            ),
+            Circle(radius=0.2, **primary_params).move_to(_end),
+        ])
+
+        primary_font = {
+            "font_size": 36,
+            "color": GREEN_B
+        }
+
+        secondary_font = {
+            "font_size": 36,
+            "color": BLUE_A
+        }
+
+        self.play(FadeIn(group))
+        self.play(group.animate.shift(3 * LEFT).scale(0.5))
+
+        text_1 = Text("Lagrangian\nmechanics", **primary_font).next_to(group, direction=RIGHT)
+        self.play(Write(text_1))
+
+        line_sep = Line(start=(0, 1, 0), end=(0, -1, 0)).next_to(text_1)
+        self.play(Create(line_sep))
+
+        text_2 = Text("Simple\npendulum", **secondary_font).next_to(line_sep, direction=RIGHT)
+        self.play(Write(text_2))
+        self.wait(5)
+
     def construct(self):
+        self.play_intro()
+        return
         time = ValueTracker(0)
 
         def updater(_: Mobject):
