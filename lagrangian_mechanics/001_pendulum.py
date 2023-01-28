@@ -23,15 +23,17 @@ from manim import *
 
 config.frame_size = (1080, 1080)
 
-L = 2.0
+SCALE_FACTOR = 1.25
+
+L = 4.0 * SCALE_FACTOR
 g = 9.81
 T = 2 * np.pi * np.sqrt(L / g)
 
-N_STEPS = 1000
-SIMULATION_TIME = 1 * T
+N_STEPS = 8000
+SIMULATION_TIME = 8 * T
 times = np.linspace(0, SIMULATION_TIME, N_STEPS)
 
-theta = np.pi / 6  # pendulum angle
+theta = -PI / 6  # pendulum angle
 omega = 0  # pendulum angular velocity
 
 
@@ -91,7 +93,7 @@ class SimplePendulum:
         )
         self.g_trajectory.set_z_index(self.g_mass.z_index - 1)
         self.g_text_theta = MathTex(r"\theta", **drawing_symbols_params).next_to(self.g_angle_arc, RIGHT)
-        self.g_text_l = MathTex(r"L", **drawing_symbols_params) \
+        self.g_text_l = MathTex(r"l", **drawing_symbols_params) \
             .move_to((self.rod_start + self.rod_end) / 2 + LEFT / 2)
         self.g_text_m = MathTex(r"m", **drawing_symbols_params).next_to(self.g_mass, DOWN)
 
@@ -159,9 +161,9 @@ class Scenario(MovingCameraScene):
 
         text_2 = Text("Simple\npendulum", **secondary_font).next_to(line_sep, direction=RIGHT)
         self.play(Write(text_2))
-        self.wait(5)
+        self.wait(3)
 
-    def play_scenario(self):
+    def play_draw_main_scene(self):
         p = self.pendulum
         self.play(Create(p.g_symmetry_line), run_time=0.5)
         self.play(
@@ -188,44 +190,136 @@ class Scenario(MovingCameraScene):
             run_time=0.5
         )
 
-        self.play(p.g_all.animate.scale(0.75).shift(4.0 * RIGHT))
+        self.play(p.g_all.animate.scale(SCALE_FACTOR).shift(1.25 * RIGHT + 1.25 * DOWN))
         self.wait(0.5)
 
-    def construct(self):
-        # self.play_intro()
-        self.play_scenario()
-        return
+    def play_draw_equations(self):
+        comment_font = {
+            "font_size": 24,
+            "color": GREEN_B
+        }
+
+        math_font = {
+            "font_size": 28,
+            "color": BLUE_B
+        }
+
+        math_font_large = {
+            "font_size": 36,
+            "color": BLUE_B
+        }
+
+        text_title = Text("Derivation of the equation of motion", **comment_font) \
+            .shift(6 * UP + 4 * LEFT)
+        self.play(Write(text_title), run_time=1)
+
+        text_comment1 = Text("1. Lagrangian:", **comment_font) \
+            .next_to(text_title, 2 * DOWN) \
+            .align_to(text_title, LEFT)
+        self.play(Write(text_comment1), run_time=1)
+        text_lagrangian = MathTex(r"\mathcal{L} = T - V", **math_font).next_to(text_comment1, RIGHT)
+        self.play(Write(text_lagrangian), run_time=1)
+
+        text_t = MathTex(r"T = m\frac{(\dot{\theta}l)^2}{2},\;kinetic\;energy", **math_font) \
+            .next_to(text_lagrangian, DOWN) \
+            .align_to(text_comment1, LEFT)
+        self.play(Write(text_t), run_time=1)
+
+        text_v = MathTex(r"V = mgl(1 - cos\theta),\;potential\;energy", **math_font) \
+            .next_to(text_t, DOWN) \
+            .align_to(text_t, LEFT)
+        self.play(Write(text_v), run_time=1)
+
+        self.wait(3)
+
+        text_comment2 = Text("2. Plugging into the Lagrange's equation:", **comment_font) \
+            .next_to(text_v, 2 * DOWN) \
+            .align_to(text_v, LEFT)
+        self.play(Write(text_comment2), run_time=1)
+
+        LE_LaTeX = \
+            r"\frac{d}{dt}\left(\frac{\partial \mathcal{L}}{\partial\dot{\theta}}\right)-\frac{\partial \mathcal{L}}{\partial\theta}=0"
+        text_le = MathTex(LE_LaTeX, **math_font) \
+            .next_to(text_comment2, DOWN) \
+            .align_to(text_comment2, LEFT)
+        self.play(Write(text_le), run_time=1)
+
+        text_le_1 = MathTex(r"\frac{\partial \mathcal{L}}{\partial\dot{\theta}}=ml^2\dot\theta^2", **math_font) \
+            .next_to(text_le, DOWN) \
+            .align_to(text_le, LEFT)
+        self.play(Write(text_le_1), run_time=1)
+
+        text_le_2 = MathTex(
+            r"\frac{d}{dt}\left(\frac{\partial \mathcal{L}}{\partial\dot{\theta}}\right)=ml^2\ddot\theta", **math_font) \
+            .next_to(text_le_1, DOWN) \
+            .align_to(text_le_1, LEFT)
+        self.play(Write(text_le_2), run_time=1)
+
+        text_le_3 = MathTex(r"\frac{\partial \mathcal{L}}{\partial\theta}=-mglsin\theta", **math_font) \
+            .next_to(text_le_2, DOWN) \
+            .align_to(text_le_2, LEFT)
+        self.play(Write(text_le_3), run_time=1)
+
+        self.wait(2)
+
+        text_le_4 = MathTex(r"ml^2\ddot\theta+mglsin\theta=0", **math_font) \
+            .next_to(text_le_3, 2 * DOWN) \
+            .align_to(text_le_3, LEFT)
+        self.play(Write(text_le_4), run_time=1)
+
+        self.wait(1)
+
+        text_final_eq = MathTex(r"\ddot\theta+\frac{g}{l}sin\theta=0", **math_font_large) \
+            .next_to(text_le_3, 2 * DOWN) \
+            .align_to(text_le_3, LEFT)
+
+        self.play(text_le_4.animate.become(text_final_eq), run_time=2)
+
+        frame = Rectangle(color=RED_C).surround(text_final_eq, dim_to_match=1, stretch=True)
+        self.play(Create(frame), run_time=1)
+        self.wait(1)
+
+    def animate_pendulum(self):
+        self.play(FadeOut(self.pendulum.g_symbols), run_time=0.5)
+
         time = ValueTracker(0)
 
-        def updater(_: Mobject):
+        ox, oy, _ = self.pendulum.g_rod.get_start()
+
+        def mass_updater(circle: Mobject) -> None:
             step = int(time.get_value() / SIMULATION_TIME * N_STEPS)
-            x, y = xs[step], ys[step]
+            x, y = xs[step] + ox, ys[step] + oy
             circle.move_to(np.array([x, y, 0]))
-            line.put_start_and_end_on(line.get_start(), end=np.array([x, y, 0]))
 
-        circle = Circle(radius=0.1, color=GREEN_E, fill_opacity=1)
-        line = Line(
-            start=np.array([0, 0, 0]),
-            end=np.array([0, -0.2, 0]),
-            stroke_width=2,
-            stroke_color=GREEN_E
-        )
+        def rod_updater(rod: Mobject) -> None:
+            step = int(time.get_value() / SIMULATION_TIME * N_STEPS)
+            x, y = xs[step] + ox, ys[step] + oy
+            rod.put_start_and_end_on(rod.get_start(), end=np.array([x, y, 0]))
 
-        circle.add_updater(updater)
+        def arc_updater(arc: Arc) -> None:
+            step = int(time.get_value() / SIMULATION_TIME * N_STEPS)
+            new_arc = Arc(radius=arc.radius * SCALE_FACTOR, start_angle=arc.start_angle, angle=thetas[step],
+                          arc_center=np.array((ox, oy, 0)), **secondary_params)
+            arc.become(new_arc)
 
-        self.camera.frame.set(width=5).move_to([0, -L / 2, 0])
+        self.pendulum.g_mass.add_updater(mass_updater)
+        self.pendulum.g_rod.add_updater(rod_updater)
+        self.pendulum.g_angle_arc.add_updater(arc_updater)
 
-        self.add(circle)
-        self.add(line)
-        self.add(Line(
-            start=[-0.2, 0, 0],
-            end=[0.2, 0, 0],
-            stroke_width=2,
-            stroke_color=GREEN_E
-        ))
         self.play(time.animate.set_value(SIMULATION_TIME),
                   run_time=SIMULATION_TIME,
                   rate_func=rate_functions.linear)
+
+    def fade_out_all(self):
+        self.play(*[FadeOut(obj) for obj in self.mobjects])
+
+    def construct(self):
+        self.play_intro()
+        self.fade_out_all()
+        self.play_draw_main_scene()
+        self.play_draw_equations()
+        self.animate_pendulum()
+        self.wait(5)
 
 
 if __name__ == "__main__":
