@@ -31,7 +31,7 @@ from numpy import sin, cos
 from lagrangian_mechanics.solver.ode_solver import solve, integrate_rk4
 from manim import *
 
-from primitives import CenterOfMass
+from primitives import CenterOfMass, SegmentedWheel, WheelAxis
 
 logging.basicConfig(format='%(asctime)s %(message)s', level=logging.INFO)
 
@@ -277,15 +277,16 @@ class Scenario(MovingCameraScene):
         r = self.model.params.r
         th = self.model.thetas[0]
 
-        floor = Line(start=np.array((-4, -R, 0)), end=np.array((4, -R, 0)), **primary_params)
-        wheel = Circle(radius=self.model.params.R).move_to(np.array((x_offset, 0, 0)))
+        floor = Line(start=np.array((-4, -R, 0)), end=np.array((4, -R, 0)), stroke_width=4, **primary_params)
+        wheel = SegmentedWheel(radius=R, thickness=0.1, angle=-th, secondary_color=BLACK, stroke_width=1).move_to([x_offset, 0, 0])
+        wheel_axis = WheelAxis(radius=(R - 0.1), angle=(th + PI / 4), stroke_color=BLUE, stroke_width=2).move_to([x_offset, 0, 0])
 
         x0, y0 = r * sin(th) + x_offset, r * cos(th)
         cm = CenterOfMass(radius=0.2, color=YELLOW, stroke_width=2).move_to([x0, y0, 0])
 
-        point_of_contact = Circle(radius=0.05, stroke_color=PURE_RED, fill_color=PURE_RED, fill_opacity=1).move_to(np.array((x_offset, -R, 0)))
+        point_of_contact = Circle(radius=0.025, stroke_color=PURE_RED, fill_color=PURE_RED, fill_opacity=1).move_to(np.array((x_offset, -R, 0)))
 
-        moving_objects.add(wheel, cm, point_of_contact)
+        moving_objects.add(wheel, cm, point_of_contact, wheel_axis)
 
         self.add(floor)
         self.add(moving_objects)
@@ -297,7 +298,14 @@ class Scenario(MovingCameraScene):
             _th = self.model.thetas[step]
             _pos = self.model.positions[step] + x_offset
             _x, _y = r * sin(_th) + _pos, r * cos(_th)
-            wheel.move_to(np.array((_pos, 0, 0)))
+            wheel.become(
+              SegmentedWheel(radius=R, thickness=0.1, angle=-_th, secondary_color=BLACK, stroke_width=1) \
+                .move_to([_pos, 0, 0])
+            )
+
+            wheel_axis.become(
+              WheelAxis(radius=(R - 0.1), angle=(_th + PI / 4), stroke_color=BLUE, stroke_width=2).move_to([_pos, 0, 0])
+            )
 
             _cm = CenterOfMass(radius=0.2, angle=-_th, color=YELLOW, stroke_width=2).move_to([_x, _y, 0])
             cm.become(_cm)
@@ -319,7 +327,7 @@ class Scenario(MovingCameraScene):
         # self.play_draw_main_scene()
         # self.play_draw_equations()
         self.animate_pendulum()
-        # self.wait(5)
+        # self.wait(5)        
 
 
 if __name__ == "__main__":

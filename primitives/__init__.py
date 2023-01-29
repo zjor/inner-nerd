@@ -1,1 +1,2 @@
 from primitives.center_of_mass import CenterOfMass
+from primitives.segmented_wheel import SegmentedWheel, WheelAxis

@@ -1,5 +1,4 @@
 from manim import *
-from manim.mobject.opengl.opengl_compatibility import ConvertToOpenGL
 
 
 class CenterOfMass(VGroup):
