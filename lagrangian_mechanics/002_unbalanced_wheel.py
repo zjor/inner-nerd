@@ -31,6 +31,8 @@ from numpy import sin, cos
 from lagrangian_mechanics.solver.ode_solver import solve, integrate_rk4
 from manim import *
 
+from primitives import CenterOfMass
+
 logging.basicConfig(format='%(asctime)s %(message)s', level=logging.INFO)
 
 config.frame_size = (1080, 1080)
@@ -269,36 +271,40 @@ class Scenario(MovingCameraScene):
 
         x_offset = -6
 
-        floor = Line(start=np.array((-4, -2, 0)), end=np.array((4, -2, 0)), **primary_params)
-        wheel = Circle(radius=self.model.params.R).move_to(np.array((x_offset, 0, 0)))
+        moving_objects = VGroup()
 
+        R = self.model.params.R
         r = self.model.params.r
         th = self.model.thetas[0]
 
+        floor = Line(start=np.array((-4, -R, 0)), end=np.array((4, -R, 0)), **primary_params)
+        wheel = Circle(radius=self.model.params.R).move_to(np.array((x_offset, 0, 0)))
+
         x0, y0 = r * sin(th) + x_offset, r * cos(th)
-        mass = Circle(radius=0.2, stroke_color=BLUE_E, fill_color=BLUE_E, fill_opacity=1).move_to(np.array((x0, y0, 0)))
+        cm = CenterOfMass(radius=0.2, color=YELLOW, stroke_width=2).move_to([x0, y0, 0])
+
+        point_of_contact = Circle(radius=0.05, stroke_color=PURE_RED, fill_color=PURE_RED, fill_opacity=1).move_to(np.array((x_offset, -R, 0)))
+
+        moving_objects.add(wheel, cm, point_of_contact)
 
         self.add(floor)
-        self.add(wheel)
-        self.add(mass)
+        self.add(moving_objects)
 
         time = ValueTracker(0)
 
-        def mass_updater(obj: Circle) -> None:
+        def updater(_: VGroup) -> None:
             step = int(time.get_value() / SIMULATION_TIME * N_STEPS)
             _th = self.model.thetas[step]
-            _pos = self.model.positions[step]
-            _x, _y = r * sin(_th) + _pos + x_offset, r * cos(_th)
-            obj.move_to(np.array((_x, _y, 0)))
+            _pos = self.model.positions[step] + x_offset
+            _x, _y = r * sin(_th) + _pos, r * cos(_th)
+            wheel.move_to(np.array((_pos, 0, 0)))
 
-        def wheel_updater(obj: Circle) -> None:
-            step = int(time.get_value() / SIMULATION_TIME * N_STEPS)
-            _th = self.model.thetas[step]
-            _pos = self.model.positions[step]
-            obj.move_to(np.array((_pos + x_offset, 0, 0)))
+            _cm = CenterOfMass(radius=0.2, angle=-_th, color=YELLOW, stroke_width=2).move_to([_x, _y, 0])
+            cm.become(_cm)
 
-        mass.add_updater(mass_updater)
-        wheel.add_updater(wheel_updater)
+            point_of_contact.move_to(np.array((_pos, -R, 0)))
+
+        moving_objects.add_updater(updater)
 
         self.play(time.animate.set_value(SIMULATION_TIME),
                   run_time=SIMULATION_TIME,
