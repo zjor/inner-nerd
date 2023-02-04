@@ -23,15 +23,12 @@ Scenario:
     - wait until motion stops, pause
 """
 import logging
-from dataclasses import dataclass
 
 import numpy as np
-from numpy import sin, cos
 
-from lagrangian_mechanics.unbalanced_wheel import ModelParams, Simulation, SIMULATION_TIME, N_STEPS
+from lagrangian_mechanics.unbalanced_wheel import ModelParams, Simulation, Geometry
 from manim import *
 
-from primitives import CenterOfMass, SegmentedWheel, WheelAxis
 
 logging.basicConfig(format='%(asctime)s %(message)s', level=logging.INFO)
 
@@ -60,6 +57,8 @@ class Scenario(MovingCameraScene):
     def __init__(self):
         super().__init__()
         self.model = Simulation(ModelParams())
+        self.geometry = Geometry(self.model)
+        self.to_hide = []
 
     def play_intro(self):
         _l = 2.0
@@ -105,10 +104,35 @@ class Scenario(MovingCameraScene):
         text_2 = Text("Unbalanced\nwheel", **
                       secondary_font).next_to(line_sep, direction=RIGHT)
         self.play(Write(text_2))
-        self.wait(3)
+        self.wait(1.5)
+
+    def write_problem_description(self):
+        text = """A mass m is attached to a weightless wheel
+of a radius R, the distance between the mass 
+and the center of the wheel is r,
+initial angle of the wheel is Θ, 
+the friction coefficient is b."""
+        t2c = {
+          '[7:8]': RED,
+          '[55:56]': RED,
+          '[120:121]': RED,
+          '[153:154]': RED,
+          '[185:186]': RED,
+        }
+        t1 = Text(text, t2c=t2c, color=GREEN_B, font="Consolas", font_size=24, line_spacing=1.5).next_to(self.geometry.moving_objects, RIGHT)
+        self.to_hide.append(t1)
+        self.play(Write(t1), run_time=3)
 
     def play_draw_main_scene(self):
-      pass
+        self.play(FadeIn(*[
+            self.geometry.floor,
+            self.geometry.moving_objects
+        ]))
+        self.play(FadeIn(self.geometry.annotations))
+        self.write_problem_description()
+        self.wait(1)
+        self.play(FadeOut(self.geometry.annotations, *self.to_hide))
+        self.play(self.geometry.floor.animate.become(self.geometry.full_floor))
 
     def play_draw_equations(self):
         comment_font = {
@@ -126,9 +150,72 @@ class Scenario(MovingCameraScene):
             "color": BLUE_B
         }
 
-        text_title = Text("Derivation of the equation of motion", **comment_font) \
-            .shift(6 * UP + 4 * LEFT)
-        self.play(Write(text_title), run_time=1)
+        # Kinetic energy section
+        txt_1 = Text("1. Kinetic energy", **comment_font) \
+            .move_to(6.5 * UP + 5.5 * LEFT)
+        self.play(Write(txt_1), run_time=0.5)
+
+        txt_2 = MathTex(r"v_x=\dot{\theta}rsin\theta+\dot{\theta}R", **math_font) \
+            .next_to(txt_1, 2 * DOWN) \
+            .align_to(txt_1, LEFT)
+        self.play(Write(txt_2), run_time=0.5)
+
+        txt_3 = MathTex(r"v_y=-\dot{\theta}rcos\theta", **math_font) \
+            .next_to(txt_2, DOWN) \
+            .align_to(txt_2, LEFT)
+        self.play(Write(txt_3), run_time=0.5)
+
+        txt_4 = MathTex(r"v^2=\dot{\theta}^2(r^2+R^2+2rRsin\theta)", **math_font) \
+            .next_to(txt_3, DOWN) \
+            .align_to(txt_3, LEFT)
+        self.play(Write(txt_4), run_time=0.5)
+
+        txt_5 = MathTex(r"T=\frac{1}{2}m\dot{\theta}^2(r^2+R^2+2rRsin\theta)", **math_font) \
+            .next_to(txt_4, DOWN) \
+            .align_to(txt_4, LEFT)
+        self.play(Write(txt_5), run_time=0.5)
+
+        # Potential energy section
+        txt_6 = Text("2. Potential energy", **comment_font) \
+            .move_to(6.5 * UP + LEFT)
+        self.play(Write(txt_6), run_time=0.5)
+
+        txt_7 = MathTex(r"V=mg(R+rcos\theta)", **math_font) \
+            .next_to(txt_6, 2 * DOWN) \
+            .align_to(txt_6, LEFT)
+        self.play(Write(txt_7), run_time=0.5)
+
+        # Reileygh energy dissipation function
+        txt_8 = Text("3. Reileygh dissipation", **comment_font) \
+            .next_to(txt_7, 2 * DOWN) \
+            .align_to(txt_7, LEFT)
+        self.play(Write(txt_8), run_time=0.5)
+
+        txt_9 = MathTex(r"D=\frac{1}{2}{\dot{\theta}^2}b", **math_font) \
+            .next_to(txt_8, 2 * DOWN) \
+            .align_to(txt_8, LEFT)
+        self.play(Write(txt_9), run_time=0.5)
+
+        # Deriving equations of motion
+        txt_10 = Text("4. Equations of motion", **comment_font) \
+          .move_to(6.5 * UP + 3 * RIGHT)
+        self.play(Write(txt_10), run_time=0.5)
+
+        txt_11 = MathTex(r"\mathcal{L}=\frac{1}{2}m\dot{\theta}^2(r^2+R^2+2rRsin\theta)-\\-mg(R+rcos\theta)", **math_font) \
+            .next_to(txt_10, 2 * DOWN) \
+            .align_to(txt_10, LEFT)
+        self.play(Write(txt_11), run_time=0.5)
+
+
+        LE_LaTeX = \
+            r"\frac{d}{dt}\left(\frac{\partial \mathcal{L}}{\partial\dot{\theta}}\right)-\frac{\partial \mathcal{L}}{\partial\theta}+\frac{\partial D}{\partial{\dot\theta}}=0"
+        txt_12 = MathTex(LE_LaTeX, **math_font) \
+            .next_to(txt_11, DOWN) \
+            .align_to(txt_11, LEFT)
+        self.play(Write(txt_12), run_time=0.5)
+
+
+        return
 
         text_comment1 = Text("1. Lagrangian:", **comment_font) \
             .next_to(text_title, 2 * DOWN) \
@@ -199,74 +286,17 @@ class Scenario(MovingCameraScene):
         self.wait(1)
 
     def animate_pendulum(self):
-        self.model.solve_model()
-
-        x_offset = -6
-
-        moving_objects = VGroup()
-
-        R = self.model.params.R
-        r = self.model.params.r
-        th = self.model.thetas[0]
-
-        floor = Line(start=np.array((-4, -R, 0)),
-                     end=np.array((4, -R, 0)), stroke_width=4, **primary_params)
-        wheel = SegmentedWheel(radius=R, thickness=0.1, angle=-th,
-                               secondary_color=BLACK, stroke_width=1).move_to([x_offset, 0, 0])
-        wheel_axis = WheelAxis(radius=(R - 0.1), angle=(th + PI / 4),
-                               stroke_color=BLUE, stroke_width=2).move_to([x_offset, 0, 0])
-
-        x0, y0 = r * sin(th) + x_offset, r * cos(th)
-        cm = CenterOfMass(radius=0.2, color=YELLOW,
-                          stroke_width=2).move_to([x0, y0, 0])
-
-        point_of_contact = Circle(radius=0.025, stroke_color=PURE_RED,
-                                  fill_color=PURE_RED, fill_opacity=1).move_to(np.array((x_offset, -R, 0)))
-
-        moving_objects.add(wheel, cm, point_of_contact, wheel_axis)
-
-        self.add(floor)
-        self.add(moving_objects)
-
-        time = ValueTracker(0)
-
-        def updater(_: VGroup) -> None:
-            step = int(time.get_value() / SIMULATION_TIME * N_STEPS)
-            _th = self.model.thetas[step]
-            _pos = self.model.positions[step] + x_offset
-            _x, _y = r * sin(_th) + _pos, r * cos(_th)
-            wheel.become(
-                SegmentedWheel(radius=R, thickness=0.1, angle=-
-                               _th, secondary_color=BLACK, stroke_width=1)
-                .move_to([_pos, 0, 0])
-            )
-
-            wheel_axis.become(
-                WheelAxis(radius=(R - 0.1), angle=(_th + PI / 4),
-                          stroke_color=BLUE, stroke_width=2).move_to([_pos, 0, 0])
-            )
-
-            _cm = CenterOfMass(radius=0.2, angle=-_th, color=YELLOW,
-                               stroke_width=2).move_to([_x, _y, 0])
-            cm.become(_cm)
-
-            point_of_contact.move_to(np.array((_pos, -R, 0)))
-
-        moving_objects.add_updater(updater)
-
-        self.play(time.animate.set_value(SIMULATION_TIME),
-                  run_time=SIMULATION_TIME,
-                  rate_func=rate_functions.linear)
+        self.geometry.animate(self)
 
     def fade_out_all(self):
         self.play(*[FadeOut(obj) for obj in self.mobjects])
 
     def construct(self):
-        self.play_intro()
-        self.fade_out_all()
+        # self.play_intro()
+        # self.fade_out_all()
         # self.play_draw_main_scene()
-        # self.play_draw_equations()
-        self.animate_pendulum()
+        self.play_draw_equations()
+        # self.animate_pendulum()
         # self.wait(5)
 
 
