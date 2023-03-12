@@ -3,7 +3,7 @@ from dataclasses import dataclass
 g = 9.81
 
 N_STEPS = 12000
-SIMULATION_TIME = 20
+SIMULATION_TIME = 24
 
 @dataclass
 class ModelParams:

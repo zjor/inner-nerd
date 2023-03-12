@@ -27,6 +27,7 @@ import logging
 import numpy as np
 
 from lagrangian_mechanics.unbalanced_wheel import ModelParams, Simulation, Geometry
+from primitives import LAGRANGIAN_RAYLEIGH
 from manim import *
 
 
@@ -121,7 +122,7 @@ the friction coefficient is b."""
         }
         t1 = Text(text, t2c=t2c, color=GREEN_B, font="Consolas", font_size=24, line_spacing=1.5).next_to(self.geometry.moving_objects, RIGHT)
         self.to_hide.append(t1)
-        self.play(Write(t1), run_time=3)
+        self.play(Write(t1), run_time=6)
 
     def play_draw_main_scene(self):
         self.play(FadeIn(*[
@@ -130,9 +131,9 @@ the friction coefficient is b."""
         ]))
         self.play(FadeIn(self.geometry.annotations))
         self.write_problem_description()
-        self.wait(1)
-        self.play(FadeOut(self.geometry.annotations, *self.to_hide))
-        self.play(self.geometry.floor.animate.become(self.geometry.full_floor))
+        self.wait(4)
+        self.play(FadeOut(*self.to_hide))
+        self.to_hide.clear()
 
     def play_draw_equations(self):
         comment_font = {
@@ -153,137 +154,130 @@ the friction coefficient is b."""
         # Kinetic energy section
         txt_1 = Text("1. Kinetic energy", **comment_font) \
             .move_to(6.5 * UP + 5.5 * LEFT)
-        self.play(Write(txt_1), run_time=0.5)
+        self.play(Write(txt_1), run_time=1)
 
         txt_2 = MathTex(r"v_x=\dot{\theta}rsin\theta+\dot{\theta}R", **math_font) \
             .next_to(txt_1, 2 * DOWN) \
             .align_to(txt_1, LEFT)
-        self.play(Write(txt_2), run_time=0.5)
+        self.play(Write(txt_2), run_time=1)
+        self.wait(0.5)
 
         txt_3 = MathTex(r"v_y=-\dot{\theta}rcos\theta", **math_font) \
             .next_to(txt_2, DOWN) \
             .align_to(txt_2, LEFT)
-        self.play(Write(txt_3), run_time=0.5)
+        self.play(Write(txt_3), run_time=1)
+        self.wait(0.5)
 
         txt_4 = MathTex(r"v^2=\dot{\theta}^2(r^2+R^2+2rRsin\theta)", **math_font) \
             .next_to(txt_3, DOWN) \
             .align_to(txt_3, LEFT)
-        self.play(Write(txt_4), run_time=0.5)
+        self.play(Write(txt_4), run_time=1)
+        self.wait(0.5)
 
         txt_5 = MathTex(r"T=\frac{1}{2}m\dot{\theta}^2(r^2+R^2+2rRsin\theta)", **math_font) \
             .next_to(txt_4, DOWN) \
             .align_to(txt_4, LEFT)
-        self.play(Write(txt_5), run_time=0.5)
+        self.play(Write(txt_5), run_time=1)
+        self.wait(1)
 
         # Potential energy section
         txt_6 = Text("2. Potential energy", **comment_font) \
             .move_to(6.5 * UP + LEFT)
-        self.play(Write(txt_6), run_time=0.5)
+        self.play(Write(txt_6), run_time=1)
 
         txt_7 = MathTex(r"V=mg(R+rcos\theta)", **math_font) \
             .next_to(txt_6, 2 * DOWN) \
             .align_to(txt_6, LEFT)
-        self.play(Write(txt_7), run_time=0.5)
+        self.play(Write(txt_7), run_time=1)
+        self.wait(0.5)
 
-        # Reileygh energy dissipation function
-        txt_8 = Text("3. Reileygh dissipation", **comment_font) \
+        # Rayleigh energy dissipation function
+        txt_8 = Text("3. Rayleigh dissipation", **comment_font) \
             .next_to(txt_7, 2 * DOWN) \
             .align_to(txt_7, LEFT)
-        self.play(Write(txt_8), run_time=0.5)
+        self.play(Write(txt_8), run_time=1)
+        self.wait(0.5)
 
         txt_9 = MathTex(r"D=\frac{1}{2}{\dot{\theta}^2}b", **math_font) \
             .next_to(txt_8, 2 * DOWN) \
             .align_to(txt_8, LEFT)
-        self.play(Write(txt_9), run_time=0.5)
+        self.play(Write(txt_9), run_time=1)
+        self.wait(1)
 
         # Deriving equations of motion
         txt_10 = Text("4. Equations of motion", **comment_font) \
           .move_to(6.5 * UP + 3 * RIGHT)
-        self.play(Write(txt_10), run_time=0.5)
+        self.play(Write(txt_10), run_time=1)
 
         txt_11 = MathTex(r"\mathcal{L}=\frac{1}{2}m\dot{\theta}^2(r^2+R^2+2rRsin\theta)-\\-mg(R+rcos\theta)", **math_font) \
             .next_to(txt_10, 2 * DOWN) \
             .align_to(txt_10, LEFT)
-        self.play(Write(txt_11), run_time=0.5)
+        self.play(Write(txt_11), run_time=1)
+        self.wait(0.5)
 
-
-        LE_LaTeX = \
-            r"\frac{d}{dt}\left(\frac{\partial \mathcal{L}}{\partial\dot{\theta}}\right)-\frac{\partial \mathcal{L}}{\partial\theta}+\frac{\partial D}{\partial{\dot\theta}}=0"
-        txt_12 = MathTex(LE_LaTeX, **math_font) \
+        txt_12 = MathTex(LAGRANGIAN_RAYLEIGH, **math_font) \
             .next_to(txt_11, DOWN) \
             .align_to(txt_11, LEFT)
-        self.play(Write(txt_12), run_time=0.5)
+        self.play(Write(txt_12), run_time=1)
+        self.wait(0.5)
 
+        f = r"\frac{\partial\mathcal{L}}{\partial\dot\theta}=m\dot\theta(r^2+R^2+2rRsin\theta)"
+        txt_13 = MathTex(f, **math_font) \
+            .next_to(txt_12, DOWN) \
+            .align_to(txt_12, LEFT)
+        self.play(Write(txt_13), run_time=1)
+        self.wait(0.5)
 
-        return
+        f = r"\frac{d}{dt}\left(\frac{\partial \mathcal{L}}{\partial\dot{\theta}}\right)=m\ddot\theta(r^2+R^2+2rRsin\theta)+\\+2rRm{{\theta}^2}cos\theta"
+        txt_14 = MathTex(f, **math_font) \
+            .next_to(txt_13, DOWN) \
+            .align_to(txt_13, LEFT)
+        self.play(Write(txt_14), run_time=2)
+        self.wait(0.5)
 
-        text_comment1 = Text("1. Lagrangian:", **comment_font) \
-            .next_to(text_title, 2 * DOWN) \
-            .align_to(text_title, LEFT)
-        self.play(Write(text_comment1), run_time=1)
-        text_lagrangian = MathTex(
-            r"\mathcal{L} = T - V", **math_font).next_to(text_comment1, RIGHT)
-        self.play(Write(text_lagrangian), run_time=1)
+        f = r"\frac{\partial \mathcal{L}}{\partial\theta}=rRm{\dot\theta^2}cos\theta+mgrsin\theta"
+        txt_15 = MathTex(f, **math_font) \
+            .next_to(txt_14, DOWN) \
+            .align_to(txt_14, LEFT)
+        self.play(Write(txt_15), run_time=1)
+        self.wait(0.5)
 
-        text_t = MathTex(r"T = m\frac{(\dot{\theta}l)^2}{2},\;kinetic\;energy", **math_font) \
-            .next_to(text_lagrangian, DOWN) \
-            .align_to(text_comment1, LEFT)
-        self.play(Write(text_t), run_time=1)
+        f = r"\ddot\theta(r^2+R^2+2rRsin\theta)+rR{\dot\theta^2}cos\theta-\\-grsin\theta+\dot{\theta}\frac{b}{m}=0"
+        txt_16 = MathTex(f, **math_font) \
+            .next_to(txt_15, DOWN) \
+            .align_to(txt_15, LEFT)
+        self.play(Write(txt_16), run_time=2)
+        self.wait(0.5)
+        self.to_hide.extend([
+          txt_1, txt_2, txt_3, txt_4, txt_5, txt_6, txt_7, txt_8,
+          txt_9, txt_10, txt_11, txt_12, txt_13, txt_14, txt_15, txt_16
+        ])
 
-        text_v = MathTex(r"V = mgl(1 - cos\theta),\;potential\;energy", **math_font) \
-            .next_to(text_t, DOWN) \
-            .align_to(text_t, LEFT)
-        self.play(Write(text_v), run_time=1)
-
-        self.wait(3)
-
-        text_comment2 = Text("2. Plugging into the Lagrange's equation:", **comment_font) \
-            .next_to(text_v, 2 * DOWN) \
-            .align_to(text_v, LEFT)
-        self.play(Write(text_comment2), run_time=1)
-
-        LE_LaTeX = \
-            r"\frac{d}{dt}\left(\frac{\partial \mathcal{L}}{\partial\dot{\theta}}\right)-\frac{\partial \mathcal{L}}{\partial\theta}=0"
-        text_le = MathTex(LE_LaTeX, **math_font) \
-            .next_to(text_comment2, DOWN) \
-            .align_to(text_comment2, LEFT)
-        self.play(Write(text_le), run_time=1)
-
-        text_le_1 = MathTex(r"\frac{\partial \mathcal{L}}{\partial\dot{\theta}}=ml^2\dot\theta^2", **math_font) \
-            .next_to(text_le, DOWN) \
-            .align_to(text_le, LEFT)
-        self.play(Write(text_le_1), run_time=1)
-
-        text_le_2 = MathTex(
-            r"\frac{d}{dt}\left(\frac{\partial \mathcal{L}}{\partial\dot{\theta}}\right)=ml^2\ddot\theta", **math_font) \
-            .next_to(text_le_1, DOWN) \
-            .align_to(text_le_1, LEFT)
-        self.play(Write(text_le_2), run_time=1)
-
-        text_le_3 = MathTex(r"\frac{\partial \mathcal{L}}{\partial\theta}=-mglsin\theta", **math_font) \
-            .next_to(text_le_2, DOWN) \
-            .align_to(text_le_2, LEFT)
-        self.play(Write(text_le_3), run_time=1)
-
-        self.wait(2)
-
-        text_le_4 = MathTex(r"ml^2\ddot\theta+mglsin\theta=0", **math_font) \
-            .next_to(text_le_3, 2 * DOWN) \
-            .align_to(text_le_3, LEFT)
-        self.play(Write(text_le_4), run_time=1)
-
-        self.wait(1)
-
-        text_final_eq = MathTex(r"\ddot\theta+\frac{g}{l}sin\theta=0", **math_font_large) \
-            .next_to(text_le_3, 2 * DOWN) \
-            .align_to(text_le_3, LEFT)
-
-        self.play(text_le_4.animate.become(text_final_eq), run_time=2)
+        f = r"""
+\begin{cases}
+\ddot\theta=\frac{grsin\theta-rR{\dot\theta^2}cos\theta-\dot{\theta}\frac{b}{m}}{r^2+R^2+2rRsin\theta},\\
+x={\theta}R
+\end{cases}
+        """
+        text_final_eq = MathTex(f, **math_font_large) \
+            .next_to(txt_16, 1.2 * DOWN) \
+            .align_to(txt_16, LEFT)
+        self.play(Write(text_final_eq), run_time=3)
+        self.wait(0.5)
 
         frame = Rectangle(color=RED_C).surround(
             text_final_eq, dim_to_match=1, stretch=True)
         self.play(Create(frame), run_time=1)
+        self.wait(0.5)
+
+        g = VGroup(text_final_eq, frame)
+        self.play(g.animate.move_to([0, -4, 0]))
         self.wait(1)
+
+        self.play(FadeOut(self.geometry.annotations, *self.to_hide))
+        self.play(self.geometry.floor.animate.become(self.geometry.full_floor))
+        self.wait(1)
+
 
     def animate_pendulum(self):
         self.geometry.animate(self)
@@ -292,12 +286,12 @@ the friction coefficient is b."""
         self.play(*[FadeOut(obj) for obj in self.mobjects])
 
     def construct(self):
-        # self.play_intro()
-        # self.fade_out_all()
-        # self.play_draw_main_scene()
+        self.play_intro()
+        self.fade_out_all()
+        self.play_draw_main_scene()
         self.play_draw_equations()
-        # self.animate_pendulum()
-        # self.wait(5)
+        self.animate_pendulum()
+        self.wait(5)
 
 
 if __name__ == "__main__":
