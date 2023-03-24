@@ -45,6 +45,9 @@ def find_intersection(a: Point, b: Point, r: float) -> List[Point]:
 
 
 class Scenario(Scene):
+    def __init__(self):
+        super().__init__()
+
     def construct(self):
         a = Point(-0.3, 0.0)
         b = Point(0.3, 0.0)
