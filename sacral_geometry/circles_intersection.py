@@ -16,8 +16,13 @@ def find_intersection(a: Point, b: Point, r: float) -> List[Point]:
     # TODO: handle dist(a, b) > 2 * r
     o = Point((a.x + b.x) / 2, (a.y + b.y) / 2)
     l2 = (o.x - a.x) ** 2 + (o.y - a.y) ** 2
-    alpha = (o.y - a.y) / (o.x - a.x) # TODO: handle a.x == b.x
-    beta = sqrt((r ** 2 - l2) / (1 + alpha ** 2))
+
+    if abs(a.x - b.x) > abs(a.y - b.y):
+      alpha = (o.y - a.y) / (o.x - a.x) 
+    else:
+      alpha = (o.x - a.x) / (o.y - a.y) 
+
+    beta = sqrt((r ** 2 - l2) / (1 + alpha ** 2))        
     return [
         Point(o.x - alpha * beta, o.y + beta),
         Point(o.x + alpha * beta, o.y - beta),
