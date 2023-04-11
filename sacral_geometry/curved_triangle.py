@@ -56,16 +56,17 @@ class Scenario(Scene):
             Circle(radius=DEFAULT_R, stroke_color=BLUE_C, stroke_width=1, arc_center=c3),
         ])
 
-        for (a, b), v, c in [((c2, c3), vs[0], vs[1]), ((c1, c3), vs[1], vs[2]), ((c1, c2), vs[2], vs[0])]:
+        for (a, b), v, c in [((c1, c2), vs[0], c3), ((c2, c3), vs[1], c1), ((c3, c1), vs[2], c2)]:
             intersections = find_circles_intersection(Point.from_array(a), Point.from_array(b), DEFAULT_R)
-            nearest = Point.from_array(v).find_nearest(intersections)
+            nearest = Point.from_array(v).find_farthest(intersections)
             self.add(Dot(nearest.to_array(), color=YELLOW))
             self.add(ArcBetweenPoints(
-                start=nearest.to_array(),
-                end=c,
-                # radius=DEFAULT_R,
-                arc_center=a
+                start=v,
+                end=nearest.to_array(),
+                radius=DEFAULT_R,
+                arc_center=c
             ))
+
 
 
 if __name__ == "__main__":

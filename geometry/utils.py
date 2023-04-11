@@ -20,6 +20,9 @@ class Point:
     def find_nearest(self, points: List["Point"]) -> "Point":
         return min(points, key=lambda p: self.dist2(p))
 
+    def find_farthest(self, points: List["Point"]) -> "Point":
+        return max(points, key=lambda p: self.dist2(p))
+
     @staticmethod
     def from_array(a: List[float]):
         return Point(a[0], a[1])
