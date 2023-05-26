@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "inner-nerd"
+version = "0.1.0"
+description = ""
+authors = ["Sergey Royz <zjor.se@gmail.com>"]
+readme = "README.md"
+packages = [{include = "inner_nerd"}]
+
+[tool.poetry.dependencies]
+python = "3.9.16"
+manim = "^0.17.3"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

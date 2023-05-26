@@ -40,9 +40,13 @@ class GameOfLife:
 
     @staticmethod
     def seed_manual_corners(field: List[List[int]], n: int) -> List[List[int]]:
-        field[2][2] = 1
-        field[3][2] = 1
-        field[1][3] = 1
+        field[2][n // 2] = 1
+        field[3][n // 2] = 1
+        field[1][n // 2 + 1] = 1
+
+        field[n - 3][2] = 1
+        field[n - 4][2] = 1
+        field[n - 2][3] = 1
 
         field[n - 3][n - 3] = 1
         field[n - 4][n - 3] = 1
@@ -113,7 +117,8 @@ class Scenario(Scene):
         super().__init__()
         self.n = n
         self.steps = steps
-        self.palette = [BLUE_A, BLUE_B, BLUE_C, BLUE_D, BLUE_E]
+        # self.palette = [BLUE_A, BLUE_B, BLUE_C, BLUE_D, BLUE_E]
+        self.palette = [TEAL_A, GREEN_B, YELLOW_C, RED_D, BLUE_E]
 
     def get_color(self, row: int, col: int) -> str:
         n = self.n
